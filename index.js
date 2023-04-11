@@ -1,7 +1,13 @@
 const express = require('express');
+const morgan = require('morgan');
 const app = express();
 
+morgan.token('request-body', (request, response) => {
+  return JSON.stringify(request.body);
+});
+
 app.use(express.json());
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :request-body'));
 
 let persons = [
   {
@@ -54,16 +60,19 @@ app.delete('/api/persons/:id', (request, response) => {
 
 app.post('/api/persons', (request, response) => {
   const person = request.body;
-  if (Object.hasOwn(person, 'name') === false || Object.hasOwn(person, 'number') === false)
+  if (Object.hasOwn(person, 'name') === false || Object.hasOwn(person, 'number') === false) {
     response.status(400).json({
       error: 'name or number is missing'
     });
+    return;
+  }
 
-  if (persons.find(p => p.name === person.name))
+  if (persons.find(p => p.name === person.name)) {
     response.status(400).json({
       error: 'name must be unique'
     });
-
+    return;
+  }
   person.id = Math.floor(Math.random() * 1000000);
   persons.push(person);
 
